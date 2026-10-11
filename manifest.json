@@ -1,0 +1,16 @@
+{
+  "name": "Alps Trip Guide",
+  "short_name": "Alps Trip",
+  "description": "Offline guide + group chat for a Japan Alps & Izu road trip (Hakuba, Kamikochi, Takayama, Ito, Karuizawa).",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7f4",
+  "theme_color": "#0b4f6c",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

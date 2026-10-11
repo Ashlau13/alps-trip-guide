@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Alps Trip Guide</title>
+<meta name="description" content="Members-only trip guide.">
+<meta name="theme-color" content="#0b4f6c">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Alps Trip">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body class="locked">
+<section id="lockScreen" class="hidden" aria-label="Members only sign-in"></section>
+<header class="top">
+  <div class="brand">⛰️ Alps Trip</div>
+  <div id="gpsChip" class="chip" title="Location status">📍 …</div>
+  <div id="netChip" class="chip" title="Group chat connection">● …</div>
+  <button id="btnSettings" class="icon-btn" aria-label="Settings and test tools">⚙️</button>
+</header>
+
+<section id="nextBanner" class="banner" aria-live="polite"></section>
+
+<main>
+  <section id="tab-here" class="tab active" aria-label="Here">
+    <div id="permNote" class="note hidden"></div>
+    <div id="hereCard"></div>
+  </section>
+
+  <section id="tab-plan" class="tab" aria-label="Itinerary">
+    <h2>Itinerary <small>(times planned / approx., JST)</small></h2>
+    <div id="planList"></div>
+  </section>
+
+  <section id="tab-map" class="tab" aria-label="Route sketch">
+    <div class="seg" id="mapAreas"></div>
+    <div id="mapWrap"><svg id="map" viewBox="0 0 1000 1000" role="img" aria-label="Offline route sketch"></svg></div>
+    <p class="muted small">Offline sketch, not to scale for navigation. Points plotted from OpenStreetMap coordinates. Use your car nav / Google Maps for driving.</p>
+  </section>
+
+  <section id="tab-stays" class="tab" aria-label="Stays">
+    <h2>Stays <small>(shortlist · nothing booked)</small></h2>
+    <div id="staysList"></div>
+  </section>
+
+  <section id="tab-places" class="tab" aria-label="Places">
+    <input id="placeSearch" type="search" placeholder="Search places (English / 日本語)" aria-label="Search places">
+    <div id="placeList"></div>
+  </section>
+
+  <section id="tab-group" class="tab" aria-label="Group chat">
+    <div id="groupSetup"></div>
+    <div id="groupChat" class="hidden">
+      <div class="chat-head">
+        <div><b id="grpName">Group chat</b> <span id="grpMe" class="muted small"></span></div>
+        <label class="toggle"><input type="checkbox" id="shareLoc"> <span>Share my location</span></label>
+      </div>
+      <div id="locNote" class="muted small"></div>
+      <div id="members"></div>
+      <div id="msgList" aria-live="polite"></div>
+      <div class="pings" id="pings"></div>
+      <div class="composer">
+        <input id="msgInput" type="text" maxlength="800" placeholder="Message…" aria-label="Message" enterkeyhint="send">
+        <button id="btnSend" class="btn primary">Send</button>
+      </div>
+      <button id="btnVoice" class="btn voice" aria-label="Hold to record a voice message">🎙️ Hold to record voice message</button>
+      <div id="voiceNote" class="muted small center"></div>
+    </div>
+  </section>
+
+  <section id="tab-place" class="tab" aria-label="Place detail">
+    <button class="btn back" id="btnBack">← Back</button>
+    <div id="placeDetail"></div>
+  </section>
+</main>
+
+<nav class="tabs" role="tablist">
+  <button data-tab="here" class="active">📍<span>Here</span></button>
+  <button data-tab="plan">🗓️<span>Plan</span></button>
+  <button data-tab="map">🗺️<span>Map</span></button>
+  <button data-tab="stays">🛏️<span>Stays</span></button>
+  <button data-tab="places">📚<span>Places</span></button>
+  <button data-tab="group">💬<span>Group</span><i id="unread" class="badge hidden"></i></button>
+</nav>
+
+<dialog id="settings">
+  <form method="dialog" class="dlg">
+    <h2>Settings &amp; test tools</h2>
+    <label>Simulate location
+      <select id="simPlace"><option value="">Use device GPS</option></select>
+    </label>
+    <label>Simulate time (JST)
+      <input type="datetime-local" id="simTime">
+    </label>
+    <div class="row">
+      <button type="button" class="btn" id="btnRealTime">Use real time</button>
+      <button type="button" class="btn" id="btnRetryGps">Retry GPS</button>
+    </div>
+    <p id="swStatus" class="muted small"></p>
+    <p class="muted small">Trip content is encrypted (members only). Coordinates © OpenStreetMap contributors.</p>
+    <button class="btn primary" value="close">Close</button>
+  </form>
+</dialog>
+
+<dialog id="scanDlg">
+  <div class="dlg">
+    <h2>Scan join QR</h2>
+    <video id="scanVideo" playsinline muted></video>
+    <canvas id="scanCanvas" class="hidden"></canvas>
+    <p id="scanMsg" class="muted small">Point the camera at the QR code on the organiser's phone.</p>
+    <button class="btn" id="btnScanClose">Cancel</button>
+  </div>
+</dialog>
+
+<div id="toast" class="toast hidden" role="status"></div>
+<script src="js/vendor/qrcode.min.js"></script>
+<script src="js/lock.js"></script>
+<script src="js/app.js"></script>
+<script src="js/chat.js"></script>
+</body>
+</html>
