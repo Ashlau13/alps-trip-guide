@@ -1,5 +1,5 @@
 /* Members-only lock: trip content in data/*.json is AES-GCM encrypted with a content key.
-   The key arrives via the invite link (#...&c=KEY), or the QR (same link).
+   The key arrives via the invite link (#...&c=KEY), the QR (same link), or the member passcode (unwraps data/lock.json).
    An existing member's saved group key also unwraps it if the organiser enabled that in lock.json. Stored in localStorage 'ck'. */
 (function () {
 'use strict';
@@ -16,6 +16,17 @@ async function verify(raw) { // raw content key -> true if it decrypts the itine
 }
 async function tryRaw(raw) { const k = await verify(raw); if (!k) return false; localStorage.setItem('ck', b64u(raw)); L.key = k; return true; }
 async function lockFile() { return (await fetch('data/lock.json')).json(); }
+async function viaPass(code) {
+  const norm = code.toUpperCase().replace(/[^A-Z0-9]/g, ''); if (!norm) return false;
+  for (const w of (await lockFile()).wraps.filter(w => w.type === 'pass')) {
+    try {
+      const pk = await crypto.subtle.deriveKey({name: 'PBKDF2', salt: unb64u(w.salt), iterations: w.iter, hash: 'SHA-256'},
+        await crypto.subtle.importKey('raw', new TextEncoder().encode(norm), 'PBKDF2', false, ['deriveKey']), {name: 'AES-GCM', length: 256}, false, ['decrypt']);
+      if (await tryRaw(await dec(pk, w))) return true;
+    } catch (e) {}
+  }
+  return false;
+}
 async function viaGroupKey() {
   let g = null; try { g = JSON.parse(localStorage.getItem('grp') || 'null'); } catch (e) {}
   if (!g || !g.key) return false;
@@ -34,10 +45,11 @@ function showLock(msg) {
   document.body.classList.add('locked');
   const el = $('#lockScreen'); el.classList.remove('hidden');
   el.innerHTML = '<div class="lock-card"><div class="lock-logo">⛰️</div><h1>Alps Trip</h1><p class="lock-tag">🔒 Members only</p>' +
-    '<p class="muted">This trip guide is private to our travel group. </p><p class="note" id="lkAsk">Ask a group member for the invite link.</p>' +
+    '<p class="muted">This trip guide is private to our travel group. Join with the invite from the organiser.</p>' +
     (msg ? '<p class="note" id="lockMsg">' + msg + '</p>' : '<p class="note hidden" id="lockMsg"></p>') +
     '<button class="btn primary" id="lkScan" style="width:100%">📷 Scan invite QR</button>' +
     '<label class="lk">Paste invite link<input type="text" id="lkLink" placeholder="https://…#g=…&k=…&c=…" autocomplete="off"></label><button class="btn" id="lkLinkGo" style="width:100%">Unlock with link</button>' +
+    '<label class="lk">…or member passcode<input type="text" id="lkPass" placeholder="XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters"></label><button class="btn" id="lkPassGo" style="width:100%">Unlock with passcode</button>' +
     '<p class="muted small">Unlocking saves the key on this phone so the guide works offline. "Leave group" removes it.</p></div>';
   const say = t => { const m = $('#lockMsg'); m.textContent = t; m.classList.remove('hidden'); };
   const useLink = async str => {
@@ -45,6 +57,7 @@ function showLock(msg) {
     say(/[#&]g=/.test(str) && !/[#&]c=/.test(str) ? 'That is an older chat-only invite. Ask the organiser to send the new invite link (it ends with &c=…).' : 'That invite link is not valid for this trip.');
   };
   $('#lkLinkGo').onclick = () => useLink($('#lkLink').value.trim());
+  $('#lkPassGo').onclick = async () => { const b = $('#lkPassGo'); b.disabled = true; b.textContent = 'Checking…'; if (await viaPass($('#lkPass').value)) return location.reload(); b.disabled = false; b.textContent = 'Unlock with passcode'; say('Wrong passcode.'); };
   $('#lkScan').onclick = () => scan(useLink, say);
 }
 let stream = null, timer = null;
