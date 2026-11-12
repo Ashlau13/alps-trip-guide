@@ -207,7 +207,7 @@ function renderStays() {
 }
 
 // ---------- map (offline SVG sketch) ----------
-const AREAS = {All: null, Hakuba: ['Hakuba', 'Hakuba route', 'Omachi'], Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], 'Ito/Izu': ['Ito'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa']};
+const AREAS = {All: null, Hakuba: ['Hakuba', 'Hakuba route', 'Omachi'], Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], 'Ito/Izu': ['Ito', 'Izu'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa']};
 function renderMap() {
   $('#mapAreas').innerHTML = Object.keys(AREAS).map(a => '<button class="' + (a === S.mapArea ? 'on' : '') + '" data-area="' + a + '">' + a + '</button>').join('');
   const sel = AREAS[S.mapArea];
@@ -222,7 +222,7 @@ function renderMap() {
   let svg = '<rect x="0" y="0" width="1000" height="1000" fill="#eef3ee"/>';
   svg += '<polyline points="' + seq.map(p => X(p.lon).toFixed(1) + ',' + Y(p.lat).toFixed(1)).join(' ') + '" fill="none" stroke="#d9480f" stroke-width="5" stroke-dasharray="14 10" stroke-linejoin="round" opacity=".7"/>';
   const fs = sel ? 30 : 24, boxes = [];
-  const key = ['haneda', 'karuizawa-psp', 'happo-bt', 'sanmachi', 'kappa-bashi', 'akandana', 'ito-stn', 'jogasaki', 'omuro', 'matsumoto-castle', 'suwa-akimiya', 'happo-ike'];
+  const key = ['haneda', 'karuizawa-psp', 'happo-bt', 'sanmachi', 'kappa-bashi', 'akandana', 'tatsuta', 'joren-falls', 'ito-stn', 'jogasaki', 'omuro', 'matsumoto-castle', 'suwa-akimiya', 'happo-ike'];
   const ki = p => { const i = key.indexOf(p.id); return i < 0 ? 99 : i; };
   const main = p => p.category === 'lodging' && !p.tbd;
   const order = pts.slice().sort((a, b) => ki(a) - ki(b) || main(b) - main(a));
