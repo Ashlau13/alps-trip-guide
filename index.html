@@ -37,10 +37,21 @@
     <div id="planList"></div>
   </section>
 
-  <section id="tab-map" class="tab" aria-label="Route sketch">
-    <div class="seg" id="mapAreas"></div>
-    <div id="mapWrap"><svg id="map" viewBox="0 0 1000 1000" role="img" aria-label="Offline route sketch"></svg></div>
-    <p class="muted small">Offline sketch, not to scale for navigation. Points plotted from OpenStreetMap coordinates. Use your car nav / Google Maps for driving.</p>
+  <section id="tab-map" class="tab" aria-label="Map">
+    <div class="seg" id="mapDays" role="tablist" aria-label="Trip days"></div>
+    <div id="gmapWrap">
+      <iframe id="gmapFrame" title="Google Map of this day's route" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+      <p id="gmapOffline" class="gmap-offline hidden">The Google Map needs a network connection. The sketch below still works offline.</p>
+    </div>
+    <div id="gmapActions"></div>
+    <div id="gmapStops"></div>
+    <p class="muted small" id="gmapNote"></p>
+    <details id="mapSketch">
+      <summary>Offline sketch (all pins, always available)</summary>
+      <div class="seg" id="mapAreas"></div>
+      <div id="mapWrap"><svg id="map" viewBox="0 0 1000 1000" role="img" aria-label="Offline route sketch"></svg></div>
+      <p class="muted small">Offline sketch, not to scale for navigation. Points plotted from OpenStreetMap coordinates. Use the Google Map above, or your car nav, for driving.</p>
+    </details>
   </section>
 
   <section id="tab-stays" class="tab" aria-label="Stays">

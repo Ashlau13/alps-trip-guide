@@ -10,7 +10,7 @@ const S = {
   pois: [], byId: {}, itin: null, items: [],
   pos: null,            // {lat, lon, acc, t, sim:bool}
   gpsState: 'init',     // init | watching | ok | denied | unavailable | sim
-  simPlace: null, simNow: null, viewPoi: null, prevTab: 'here', mapArea: 'All', tab: 'here'
+  simPlace: null, simNow: null, viewPoi: null, prevTab: 'here', mapArea: 'All', mapDay: 'all', tab: 'here'
 };
 window.AlpsApp = S;
 
@@ -91,6 +91,7 @@ function placeHtml(p, opts) {
   return '<article class="card place" data-id="' + p.id + '">' + status +
     '<h2>' + (CAT_ICON[p.category] || '') + ' ' + esc(p.name) + '</h2><div class="ja">' + esc(p.name_ja) + ' · ' + esc(p.area) + '</div>' +
     '<div class="sec"><h3>What it is</h3><p>' + esc(p.info) + '</p></div>' + practical + (p.links ? '<div class="sec"><h3>Official links</h3>' + linksHtml(p.links) + '</div>' : '') +
+    '<div class="links"><a href="' + esc(gmapsPlaceUrl(p)) + '" target="_blank" rel="noopener">🗺️ Open in Google Maps</a></div>' +
     '<div class="sec"><h3>Local history</h3><p>' + esc(p.history) + '</p></div>' +
     '<div class="sec"><h3>Tips</h3><p>' + esc(p.tips) + '</p></div>' + approx + near + '</article>';
 }
@@ -158,6 +159,62 @@ function renderBanner() {
   el.innerHTML = html;
 }
 
+
+// ---------- Google Maps (keyless embeds + official open links) ----------
+const NO_DRIVE = { 'myojin-ike': 1, 'kappa-bashi': 1, 'kamikochi-bt': 1, 'kamikochi-vc': 1, 'happo-ike': 1 };
+function gmapsPlaceUrl(p) {
+  const q = ((p.name || '') + ' ' + p.lat + ',' + p.lon).trim();
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+}
+function dayDriveStops(date) {
+  const stops = [];
+  S.items.forEach(it => {
+    if (it.date !== date || it.optional || !it.poi) return;
+    if (it.type === 'bus' || it.type === 'note') return;
+    const po = S.byId[it.poi];
+    if (!po || NO_DRIVE[po.id] || po.area === 'Kamikochi') return;
+    if (stops[stops.length - 1] !== po) stops.push(po);
+  });
+  return stops;
+}
+function allTripStops() {
+  return ['haneda', 'karuizawa-psp', 'suwako-park', 'happo-bt', 'unazuki-stn', 'kittokito', 'akandana', 'takayama-green', 'ito-kowakien', 'hotel-clad', 'narita']
+    .map(id => S.byId[id]).filter(Boolean);
+}
+function gmapsDirUrl(stops) {
+  if (!stops.length) return '';
+  if (stops.length === 1) return gmapsPlaceUrl(stops[0]);
+  const origin = stops[0].lat + ',' + stops[0].lon;
+  const dest = stops[stops.length - 1].lat + ',' + stops[stops.length - 1].lon;
+  const wps = stops.slice(1, -1).slice(0, 9);
+  let url = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=' + encodeURIComponent(origin) + '&destination=' + encodeURIComponent(dest);
+  if (wps.length) url += '&waypoints=' + encodeURIComponent(wps.map(p => p.lat + ',' + p.lon).join('|'));
+  return url;
+}
+function gmapsEmbedUrl(stops) {
+  if (!stops.length) return '';
+  if (stops.length === 1) {
+    return 'https://www.google.com/maps?q=' + stops[0].lat + ',' + stops[0].lon + '&z=14&hl=en&output=embed';
+  }
+  const parts = stops.map(p => '!4m3!3m2!1d' + p.lat + '!2d' + p.lon).join('');
+  const n = stops.length;
+  return 'https://www.google.com/maps/embed?origin=mfe&hl=en&pb=!1m' + (4 * n + 1) + '!4m' + (4 * n) + parts + '!3m1!1sen!5m1!1sen';
+}
+function bookingsHtml() {
+  const bk = S.itin && S.itin.bookings;
+  if (!bk || !bk.items || !bk.items.length) return '';
+  const items = bk.items.map(it => {
+    const st = it.status === 'booked' ? '<span class="bk-done">BOOKED</span> ' : '';
+    const link = it.url ? ' <a href="' + esc(safeUrl(it.url)) + '" target="_blank" rel="noopener">↗</a>' : '';
+    return '<li>' + st + '<b>' + esc(it.title) + '</b>' + link +
+      (it.when ? '<span class="bk-when">' + esc(it.when) + '</span>' : '') +
+      (it.detail ? '<span class="bk-when">' + esc(it.detail) + '</span>' : '') + '</li>';
+  }).join('');
+  return '<details class="todo bookings" open><summary>Bookings to make</summary>' +
+    (bk.note ? '<div class="n">' + esc(bk.note) + '</div>' : '') +
+    '<ul>' + items + '</ul></details>';
+}
+
 // ---------- itinerary ----------
 function tripHeader() {
   const tr = S.itin.trip || {};
@@ -168,7 +225,8 @@ function tripHeader() {
     (tr.dates_note ? '<div class="warnnote">📅 ' + esc(tr.dates_note) + '</div>' : '') +
     (tr.route ? '<div class="n">🗺️ ' + esc(tr.route) + '</div>' : '') +
     (tr.car ? '<div class="n">🚗 ' + esc(tr.car) + '</div>' : '') +
-    (all.length ? '<details class="todo"><summary>Still to fill in / book (' + all.length + ')</summary><ul>' + all.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></details>' : '') + '</div>';
+    bookingsHtml() +
+    (all.length ? '<details class="todo"><summary>Flags in the day plan (' + all.length + ' placeholders / confirm)</summary><ul>' + all.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></details>' : '') + '</div>';
 }
 function renderPlan() {
   const n = computeNext(), t = now();
@@ -203,12 +261,43 @@ function stayArea(a, open) {
 }
 function renderStays() {
   const st = S.itin.stays; if (!st) return;
-  $('#staysList').innerHTML = '<div class="note">' + esc(st.status) + ' ' + esc(st.groupNote) + '</div>' + st.areas.map(a => stayArea(a, true)).join('');
+  $('#staysList').innerHTML = '<div class="note">' + esc(st.status) + ' ' + esc(st.groupNote) + '</div>' + bookingsHtml() + st.areas.map(a => stayArea(a, true)).join('');
 }
 
 // ---------- map (offline SVG sketch) ----------
 const AREAS = {All: null, Hakuba: ['Hakuba', 'Hakuba route', 'Omachi'], Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], Unazuki: ['Unazuki', 'Imizu (Toyama)'], 'Ito/Izu': ['Ito', 'Izu', 'Izunokuni', 'Nishiizu'], Gotemba: ['Gotemba'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo', 'Machida (Tokyo)'], Narita: ['Narita', 'Tomisato (Chiba)'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa', 'Chino']};
+function setGmapOffline(off) {
+  const n = $('#gmapOffline');
+  if (n) n.classList.toggle('hidden', !off);
+}
+function renderGoogleMap() {
+  const days = (S.itin && S.itin.days) || [];
+  const dayBtns = [{id: 'all', label: 'All days'}].concat(days.map((d, i) => ({
+    id: d.date,
+    label: 'Day ' + (i + 1) + ' · ' + fmtD(parseJst(d.date + 'T12:00')).replace(/,\s*\d{4}$/, '')
+  })));
+  if (!dayBtns.some(b => b.id === S.mapDay)) S.mapDay = 'all';
+  $('#mapDays').innerHTML = dayBtns.map(b => '<button type="button" class="' + (b.id === S.mapDay ? 'on' : '') + '" data-map-day="' + b.id + '">' + esc(b.label) + '</button>').join('');
+  const stops = S.mapDay === 'all' ? allTripStops() : dayDriveStops(S.mapDay);
+  const src = gmapsEmbedUrl(stops);
+  const frame = $('#gmapFrame');
+  if (frame && src && frame.getAttribute('src') !== src) frame.setAttribute('src', src);
+  if (frame && !src) frame.removeAttribute('src');
+  setGmapOffline(!navigator.onLine);
+  const dir = gmapsDirUrl(stops);
+  $('#gmapActions').innerHTML = (dir ? '<a class="btn primary" href="' + esc(dir) + '" target="_blank" rel="noopener">Open route in Google Maps</a>' : '') +
+    (stops.length === 1 ? '<a class="btn" href="' + esc(gmapsPlaceUrl(stops[0])) + '" target="_blank" rel="noopener">Open this place in Google Maps</a>' : '');
+  const heading = S.mapDay === 'all' ? 'Trip driving spine (overnight bases)' : 'Stops on this day';
+  $('#gmapStops').innerHTML = stops.length ? '<h3>' + esc(heading) + '</h3><ul class="list">' + stops.map(po =>
+    '<li><button class="item" data-poi="' + po.id + '"><span class="cat">' + (CAT_ICON[po.category] || '•') + '</span><span class="nm">' + esc(po.name) + '<small>' + esc(po.name_ja || '') + '</small></span></button> ' +
+    '<a class="btn" href="' + esc(gmapsPlaceUrl(po)) + '" target="_blank" rel="noopener">Open in Google Maps</a></li>'
+  ).join('') + '</ul>' : '<p class="muted small">No drive-in stops to plot for this day.</p>';
+  $('#gmapNote').textContent = S.mapDay === 'all'
+    ? 'The embedded map can show this simplified driving route (Haneda → overnight bases → Narita), not every pin at once. Use a day button for that day’s stops, or the offline sketch below for all pins. A custom all-pins Google My Map would need to be created in a Google account.'
+    : 'Keyless Google embed — this is the driving route for the day (walk-only Kamikochi paths are left out, because cars stay at Akandana). Needs a network connection. For turn-by-turn navigation, use the button above or your car nav.';
+}
 function renderMap() {
+  renderGoogleMap();
   $('#mapAreas').innerHTML = Object.keys(AREAS).map(a => '<button class="' + (a === S.mapArea ? 'on' : '') + '" data-area="' + a + '">' + a + '</button>').join('');
   const sel = AREAS[S.mapArea];
   const pts = S.pois.filter(p => !sel || sel.includes(p.area));
@@ -222,7 +311,7 @@ function renderMap() {
   let svg = '<rect x="0" y="0" width="1000" height="1000" fill="#eef3ee"/>';
   svg += '<polyline points="' + seq.map(p => X(p.lon).toFixed(1) + ',' + Y(p.lat).toFixed(1)).join(' ') + '" fill="none" stroke="#d9480f" stroke-width="5" stroke-dasharray="14 10" stroke-linejoin="round" opacity=".7"/>';
   const fs = sel ? 30 : 24, boxes = [];
-  const key = ['haneda', 'karuizawa-psp', 'shiraito-falls', 'happo-bt', 'unazuki-stn', 'kittokito', 'sanmachi', 'kappa-bashi', 'akandana', 'tatsuta', 'joren-falls', 'ito-stn', 'jogasaki', 'omuro', 'gotemba-outlets', 'grandberry', 'narita', 'matsumoto-castle', 'suwa-akimiya', 'happo-ike'];
+  const key = ['haneda', 'karuizawa-psp', 'shiraito-falls', 'happo-bt', 'unazuki-stn', 'kittokito', 'sanmachi', 'kappa-bashi', 'akandana', 'ito-kowakien', 'usami-port', 'joren-falls', 'ito-stn', 'jogasaki', 'omuro', 'hotel-clad', 'gotemba-outlets', 'grandberry', 'narita', 'suwako-park', 'happo-ike'];
   const ki = p => { const i = key.indexOf(p.id); return i < 0 ? 99 : i; };
   const main = p => p.category === 'lodging' && !p.tbd;
   const order = pts.slice().sort((a, b) => ki(a) - ki(b) || main(b) - main(a));
@@ -314,8 +403,12 @@ S.toast = function (msg, ms) { const t = $('#toast'); t.textContent = msg; t.cla
 
 function wire() {
   document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+  window.addEventListener('online', () => setGmapOffline(false));
+  window.addEventListener('offline', () => setGmapOffline(true));
   document.body.addEventListener('click', e => {
+    const ext = e.target.closest('a[target="_blank"]'); if (ext) return;
     const b = e.target.closest('[data-poi]'); if (b) { e.preventDefault(); renderPlace(b.dataset.poi); return; }
+    const day = e.target.closest('[data-map-day]'); if (day) { S.mapDay = day.dataset.mapDay; renderMap(); return; }
     const a = e.target.closest('[data-area]'); if (a) { S.mapArea = a.dataset.area; renderMap(); }
   });
   $('#btnBack').onclick = () => showTab(S.prevTab || 'here');

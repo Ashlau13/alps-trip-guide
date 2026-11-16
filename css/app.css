@@ -112,3 +112,23 @@ body.locked > header, body.locked > main, body.locked > nav, body.locked #nextBa
 .lock-logo { font-size: 44px; } .lock-card h1 { margin: 4px 0 0; } .lock-tag { font-weight: 800; color: #0b4f6c; margin: 4px 0 10px; }
 .lock-card label.lk { display: block; text-align: left; font-weight: 700; margin-top: 14px; }
 .lock-card input { width: 100%; box-sizing: border-box; }
+
+#gmapWrap{position:relative;width:100%;aspect-ratio:4/3;min-height:240px;max-height:70vh;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:#e8eef4;margin-top:8px}
+#gmapWrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.gmap-offline{position:absolute;left:8px;right:8px;bottom:8px;z-index:1;background:#fff9db;border-radius:8px;padding:6px 8px;font-size:.82rem}
+#gmapActions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+#gmapActions .btn{flex:1 1 160px;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center}
+#gmapStops{margin:0 0 8px}
+#gmapStops h3{margin:8px 0 4px;font-size:.95rem}
+#gmapStops .list{margin:0}
+#gmapNote{margin:0 0 10px}
+#mapSketch{margin:12px 0 8px}
+#mapSketch summary{font-weight:800;cursor:pointer;padding:8px 0;min-height:40px}
+.stag-first-choice,.stag-on-sale-now{background:#d3f9d8;color:#2b8a3e}
+.stag-alternative{background:#e7f5ff;color:#1864ab}
+.bookings{margin-top:8px;font-size:.9rem}
+.bookings summary{font-weight:800;cursor:pointer}
+.bookings ul{padding-left:18px;margin:6px 0}
+.bookings li{margin:6px 0}
+.bookings .bk-when{display:block;color:#555;font-size:.82rem}
+.bookings .bk-done{color:#2b8a3e;font-weight:800}
