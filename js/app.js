@@ -4,7 +4,7 @@
 const TZ = 'Asia/Tokyo';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const CAT_ICON = {transport:'🚌',lodging:'🛏️',parking:'🅿️',nature:'🌲',viewpoint:'🏔️',history:'🏯',shrine:'⛩️',temple:'🛕',museum:'🏛️',food:'🍱',shopping:'🛍️',town:'🏘️',onsen:'♨️',info:'ℹ️',garden:'🌸'};
+const CAT_ICON = {transport:'🚌',lodging:'🛏️',parking:'🅿️',nature:'🌲',viewpoint:'🏔️',history:'🏯',shrine:'⛩️',temple:'🛕',museum:'🏛️',food:'🍱',shopping:'🛍️',GEO:'🎮',town:'🏘️',onsen:'♨️',info:'ℹ️',garden:'🌸'};
 
 const S = {
   pois: [], byId: {}, itin: null, items: [],
@@ -207,7 +207,7 @@ function renderStays() {
 }
 
 // ---------- map (offline SVG sketch) ----------
-const AREAS = {All: null, Hakuba: ['Hakuba', 'Hakuba route', 'Omachi'], Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], 'Ito/Izu': ['Ito', 'Izu'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa']};
+const AREAS = {All: null, Hakuba: ['Hakuba', 'Hakuba route', 'Omachi'], Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], Unazuki: ['Unazuki', 'Imizu (Toyama)'], 'Ito/Izu': ['Ito', 'Izu', 'Izunokuni', 'Nishiizu'], Gotemba: ['Gotemba'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo', 'Machida (Tokyo)'], Narita: ['Narita', 'Tomisato (Chiba)'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa', 'Chino']};
 function renderMap() {
   $('#mapAreas').innerHTML = Object.keys(AREAS).map(a => '<button class="' + (a === S.mapArea ? 'on' : '') + '" data-area="' + a + '">' + a + '</button>').join('');
   const sel = AREAS[S.mapArea];
@@ -222,14 +222,14 @@ function renderMap() {
   let svg = '<rect x="0" y="0" width="1000" height="1000" fill="#eef3ee"/>';
   svg += '<polyline points="' + seq.map(p => X(p.lon).toFixed(1) + ',' + Y(p.lat).toFixed(1)).join(' ') + '" fill="none" stroke="#d9480f" stroke-width="5" stroke-dasharray="14 10" stroke-linejoin="round" opacity=".7"/>';
   const fs = sel ? 30 : 24, boxes = [];
-  const key = ['haneda', 'karuizawa-psp', 'happo-bt', 'sanmachi', 'kappa-bashi', 'akandana', 'tatsuta', 'joren-falls', 'ito-stn', 'jogasaki', 'omuro', 'matsumoto-castle', 'suwa-akimiya', 'happo-ike'];
+  const key = ['haneda', 'karuizawa-psp', 'shiraito-falls', 'happo-bt', 'unazuki-stn', 'kittokito', 'sanmachi', 'kappa-bashi', 'akandana', 'tatsuta', 'joren-falls', 'ito-stn', 'jogasaki', 'omuro', 'gotemba-outlets', 'grandberry', 'narita', 'matsumoto-castle', 'suwa-akimiya', 'happo-ike'];
   const ki = p => { const i = key.indexOf(p.id); return i < 0 ? 99 : i; };
   const main = p => p.category === 'lodging' && !p.tbd;
   const order = pts.slice().sort((a, b) => ki(a) - ki(b) || main(b) - main(a));
   let dots = '', labels = '';
   order.forEach(p => {
     const x = X(p.lon), y = Y(p.lat), lodge = p.category === 'lodging';
-    dots += '<g class="mp" data-poi="' + p.id + '" style="cursor:pointer"><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (lodge ? 16 : 12) + '" fill="' + (lodge ? '#0b4f6c' : '#2b8a3e') + '" stroke="#fff" stroke-width="4"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="30" fill="transparent"/></g>';
+    dots += '<g class="mp" data-poi="' + p.id + '" style="cursor:pointer"><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (lodge ? 16 : 12) + '" fill="' + (lodge ? '#0b4f6c' : (p.category === 'GEO' ? '#c92a2a' : '#2b8a3e')) + '" stroke="#fff" stroke-width="4"/><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="30" fill="transparent"/></g>';
     if (!(sel || main(p) || key.includes(p.id))) return;
     const txt = p.name.split(' (')[0], w = txt.length * fs * 0.55, h = fs * 1.1;
     let lx = x + 18, ly = y + fs * 0.35;
