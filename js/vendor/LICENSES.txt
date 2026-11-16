@@ -1,3 +1,4 @@
 qrcode.min.js  - QR Code Generator for JavaScript v2.0.4, (c) 2009 Kazuhiko Arase, MIT license. https://github.com/kazuhikoarase/qrcode-generator
 jsQR.min.js    - jsQR v1.4.0, (c) Cosmo Wolfe, Apache-2.0 license. https://github.com/cozmo/jsQR
 Map data/coordinates: (c) OpenStreetMap contributors, ODbL.
+leaflet.js/css  - Leaflet 1.9.4, (c) 2010-2023 Vladimir Agafonkin, (c) 2010-2011 CloudMade, BSD-2-Clause. https://leafletjs.com

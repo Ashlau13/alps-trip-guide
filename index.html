@@ -13,6 +13,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Alps Trip">
+<link rel="stylesheet" href="js/vendor/leaflet.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body class="locked">
@@ -40,9 +41,10 @@
   <section id="tab-map" class="tab" aria-label="Map">
     <div class="seg" id="mapDays" role="tablist" aria-label="Trip days"></div>
     <div id="gmapWrap">
-      <iframe id="gmapFrame" title="Google Map of this day's route" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
-      <p id="gmapOffline" class="gmap-offline hidden">The Google Map needs a network connection. The sketch below still works offline.</p>
+      <div id="tripMap" role="application" aria-label="Interactive trip map"></div>
+      <p id="gmapOffline" class="gmap-offline hidden">Map tiles need a network connection. Pins and the sketch below still work offline.</p>
     </div>
+    <div id="mapLegend"></div>
     <div id="gmapActions"></div>
     <div id="gmapStops"></div>
     <p class="muted small" id="gmapNote"></p>
@@ -50,7 +52,7 @@
       <summary>Offline sketch (all pins, always available)</summary>
       <div class="seg" id="mapAreas"></div>
       <div id="mapWrap"><svg id="map" viewBox="0 0 1000 1000" role="img" aria-label="Offline route sketch"></svg></div>
-      <p class="muted small">Offline sketch, not to scale for navigation. Points plotted from OpenStreetMap coordinates. Use the Google Map above, or your car nav, for driving.</p>
+      <p class="muted small">Offline sketch, not to scale for navigation. Points plotted from OpenStreetMap coordinates. Use Open in Google Maps, or your car nav, for driving.</p>
     </details>
   </section>
 
@@ -130,6 +132,7 @@
 
 <div id="toast" class="toast hidden" role="status"></div>
 <script src="js/vendor/qrcode.min.js"></script>
+<script src="js/vendor/leaflet.js"></script>
 <script src="js/lock.js"></script>
 <script src="js/app.js"></script>
 <script src="js/chat.js"></script>

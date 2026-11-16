@@ -160,11 +160,21 @@ function renderBanner() {
 }
 
 
-// ---------- Google Maps (keyless embeds + official open links) ----------
+// ---------- maps (Leaflet pins + official Google open links) ----------
 const NO_DRIVE = { 'myojin-ike': 1, 'kappa-bashi': 1, 'kamikochi-bt': 1, 'kamikochi-vc': 1, 'happo-ike': 1 };
+const DAY_COLORS = ['#0b4f6c', '#2b8a3e', '#d9480f', '#7048e8', '#c92a2a', '#1864ab', '#e67700', '#0c8599', '#5c9400', '#495057'];
+function dayNumber(date) {
+  const days = (S.itin && S.itin.days) || [];
+  const i = days.findIndex(d => d.date === date);
+  return i < 0 ? 0 : i + 1;
+}
+function dayColor(n) { return DAY_COLORS[(Math.max(1, n) - 1) % DAY_COLORS.length]; }
 function gmapsPlaceUrl(p) {
   const q = ((p.name || '') + ' ' + p.lat + ',' + p.lon).trim();
   return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q);
+}
+function gmapsDirToUrl(p) {
+  return 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=' + encodeURIComponent(p.lat + ',' + p.lon);
 }
 function dayDriveStops(date) {
   const stops = [];
@@ -191,15 +201,99 @@ function gmapsDirUrl(stops) {
   if (wps.length) url += '&waypoints=' + encodeURIComponent(wps.map(p => p.lat + ',' + p.lon).join('|'));
   return url;
 }
-function gmapsEmbedUrl(stops) {
-  if (!stops.length) return '';
-  if (stops.length === 1) {
-    return 'https://www.google.com/maps?q=' + stops[0].lat + ',' + stops[0].lon + '&z=14&hl=en&output=embed';
-  }
-  const parts = stops.map(p => '!4m3!3m2!1d' + p.lat + '!2d' + p.lon).join('');
-  const n = stops.length;
-  return 'https://www.google.com/maps/embed?origin=mfe&hl=en&pb=!1m' + (4 * n + 1) + '!4m' + (4 * n) + parts + '!3m1!1sen!5m1!1sen';
+
+function mapPinRecords(date) {
+  const order = [];
+  const byId = new Map();
+  S.items.forEach(it => {
+    if (date && it.date !== date) return;
+    if (!it.poi) return;
+    const po = S.byId[it.poi];
+    if (!po || po.lat == null || po.lon == null) return;
+    let rec = byId.get(po.id);
+    if (!rec) {
+      rec = {po: po, visits: []};
+      byId.set(po.id, rec);
+      order.push(rec);
+    }
+    rec.visits.push(it);
+  });
+  order.forEach((rec, i) => {
+    rec.optional = rec.visits.every(v => v.optional);
+    rec.dates = [];
+    rec.visits.forEach(v => { if (rec.dates[rec.dates.length - 1] !== v.date) rec.dates.push(v.date); });
+    rec.dayNums = rec.dates.map(dayNumber);
+    rec.firstDay = rec.dayNums[0] || 0;
+    rec.seq = i + 1;
+  });
+  return order;
 }
+function isWalkPin(po) { return !!(NO_DRIVE[po.id] || po.area === 'Kamikochi'); }
+function pinPopup(rec) {
+  const days = rec.dates.map(dt => 'Day ' + dayNumber(dt) + ' \u00b7 ' + fmtD(parseJst(dt + 'T12:00'))).join('<br>');
+  const opt = rec.optional ? '<div class="muted small">Optional stop</div>' : '';
+  const walk = isWalkPin(rec.po) ? '<div class="muted small">Walk / bus only (not a driving stop)</div>' : '';
+  return '<div class="mpop"><b>' + esc(rec.po.name) + '</b>' +
+    (rec.po.name_ja ? '<div class="ja">' + esc(rec.po.name_ja) + '</div>' : '') +
+    '<div class="mpop-day">' + days + '</div>' + opt + walk +
+    '<div class="links">' +
+      '<a href="' + esc(gmapsPlaceUrl(rec.po)) + '" target="_blank" rel="noopener">Open in Google Maps</a>' +
+      '<a href="' + esc(gmapsDirToUrl(rec.po)) + '" target="_blank" rel="noopener">Directions</a>' +
+      '<button type="button" class="btn" data-poi="' + rec.po.id + '">View in guide</button>' +
+    '</div></div>';
+}
+function ensureTripMap() {
+  const el = $('#tripMap');
+  if (!el || typeof L === 'undefined') return null;
+  if (S.tripMap) {
+    setTimeout(function () { if (S.tripMap) S.tripMap.invalidateSize(); }, 60);
+    return S.tripMap;
+  }
+  const map = L.map(el, {center: [36.2, 138.2], zoom: 6, scrollWheelZoom: true});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(map);
+  S.tripLayer = L.layerGroup().addTo(map);
+  S.tripYou = null;
+  S.tripMap = map;
+  setTimeout(function () { map.invalidateSize(); }, 60);
+  return map;
+}
+function drawTripPins(recs, allDays) {
+  if (!S.tripLayer) return;
+  S.tripLayer.clearLayers();
+  recs.forEach(rec => {
+    const color = dayColor(rec.firstDay);
+    const label = allDays ? String(rec.firstDay) : String(rec.seq);
+    const icon = L.divIcon({
+      className: 'trip-pin-wrap' + (rec.optional ? ' opt' : ''),
+      html: '<span class="trip-pin-dot" style="--pin:' + color + '">' + esc(label) + '</span>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -16]
+    });
+    L.marker([rec.po.lat, rec.po.lon], {
+      icon: icon,
+      title: rec.po.name,
+      alt: rec.po.name,
+      opacity: rec.optional ? 0.9 : 1,
+      zIndexOffset: rec.optional ? 0 : 100
+    }).bindPopup(pinPopup(rec), {maxWidth: 280, className: 'trip-pop'}).addTo(S.tripLayer);
+  });
+  if (S.tripYou && S.tripMap) { S.tripMap.removeLayer(S.tripYou); S.tripYou = null; }
+  if (S.pos && S.tripMap) {
+    S.tripYou = L.circleMarker([S.pos.lat, S.pos.lon], {
+      radius: 8, color: '#fff', weight: 2, fillColor: '#1c7ed6', fillOpacity: 0.95
+    }).bindPopup('You are here').addTo(S.tripMap);
+  }
+}
+function fitTripPins(recs) {
+  if (!S.tripMap || !recs.length) return;
+  const b = L.latLngBounds(recs.map(r => [r.po.lat, r.po.lon]));
+  S.tripMap.fitBounds(b.pad(0.12), {maxZoom: 14, animate: false});
+}
+
 function bookingsHtml() {
   const bk = S.itin && S.itin.bookings;
   if (!bk || !bk.items || !bk.items.length) return '';
@@ -270,34 +364,82 @@ function setGmapOffline(off) {
   const n = $('#gmapOffline');
   if (n) n.classList.toggle('hidden', !off);
 }
-function renderGoogleMap() {
+function renderTripMap() {
   const days = (S.itin && S.itin.days) || [];
   const dayBtns = [{id: 'all', label: 'All days'}].concat(days.map((d, i) => ({
     id: d.date,
-    label: 'Day ' + (i + 1) + ' · ' + fmtD(parseJst(d.date + 'T12:00')).replace(/,\s*\d{4}$/, '')
+    label: 'Day ' + (i + 1) + ' \u00b7 ' + fmtD(parseJst(d.date + 'T12:00')).replace(/,\s*\d{4}$/, '')
   })));
   if (!dayBtns.some(b => b.id === S.mapDay)) S.mapDay = 'all';
-  $('#mapDays').innerHTML = dayBtns.map(b => '<button type="button" class="' + (b.id === S.mapDay ? 'on' : '') + '" data-map-day="' + b.id + '">' + esc(b.label) + '</button>').join('');
-  const stops = S.mapDay === 'all' ? allTripStops() : dayDriveStops(S.mapDay);
-  const src = gmapsEmbedUrl(stops);
-  const frame = $('#gmapFrame');
-  if (frame && src && frame.getAttribute('src') !== src) frame.setAttribute('src', src);
-  if (frame && !src) frame.removeAttribute('src');
+  $('#mapDays').innerHTML = dayBtns.map(b => {
+    const n = b.id === 'all' ? 0 : dayNumber(b.id);
+    const col = n ? ' style="--pin:' + dayColor(n) + '"' : '';
+    return '<button type="button" class="' + (b.id === S.mapDay ? 'on' : '') + (n ? ' day-chip' : '') + '"' + col + ' data-map-day="' + b.id + '">' + esc(b.label) + '</button>';
+  }).join('');
+
+  const allDays = S.mapDay === 'all';
+  const recs = mapPinRecords(allDays ? null : S.mapDay);
+  const drive = allDays ? allTripStops() : dayDriveStops(S.mapDay);
+  const map = ensureTripMap();
+  const needFit = S._mapFitKey !== S.mapDay;
+  if (map) {
+    drawTripPins(recs, allDays);
+    setTimeout(function () {
+      if (!S.tripMap) return;
+      S.tripMap.invalidateSize();
+      if (needFit) { fitTripPins(recs); S._mapFitKey = S.mapDay; }
+    }, 80);
+  }
   setGmapOffline(!navigator.onLine);
-  const dir = gmapsDirUrl(stops);
-  $('#gmapActions').innerHTML = (dir ? '<a class="btn primary" href="' + esc(dir) + '" target="_blank" rel="noopener">Open route in Google Maps</a>' : '') +
-    (stops.length === 1 ? '<a class="btn" href="' + esc(gmapsPlaceUrl(stops[0])) + '" target="_blank" rel="noopener">Open this place in Google Maps</a>' : '');
-  const heading = S.mapDay === 'all' ? 'Trip driving spine (overnight bases)' : 'Stops on this day';
-  $('#gmapStops').innerHTML = stops.length ? '<h3>' + esc(heading) + '</h3><ul class="list">' + stops.map(po =>
-    '<li><button class="item" data-poi="' + po.id + '"><span class="cat">' + (CAT_ICON[po.category] || '•') + '</span><span class="nm">' + esc(po.name) + '<small>' + esc(po.name_ja || '') + '</small></span></button> ' +
-    '<a class="btn" href="' + esc(gmapsPlaceUrl(po)) + '" target="_blank" rel="noopener">Open in Google Maps</a></li>'
-  ).join('') + '</ul>' : '<p class="muted small">No drive-in stops to plot for this day.</p>';
-  $('#gmapNote').textContent = S.mapDay === 'all'
-    ? 'The embedded map can show this simplified driving route (Haneda → overnight bases → Narita), not every pin at once. Use a day button for that day’s stops, or the offline sketch below for all pins. A custom all-pins Google My Map would need to be created in a Google account.'
-    : 'Keyless Google embed — this is the driving route for the day (walk-only Kamikochi paths are left out, because cars stay at Akandana). Needs a network connection. For turn-by-turn navigation, use the button above or your car nav.';
+
+  const legendEl = $('#mapLegend');
+  if (legendEl) {
+    if (allDays) {
+      legendEl.innerHTML = days.map((d, i) => '<span class="leg"><i style="background:' + dayColor(i + 1) + '"></i> D' + (i + 1) + '</span>').join('') +
+        '<span class="leg opt">Lighter pin = optional</span>';
+    } else {
+      legendEl.innerHTML = '<span class="leg"><i style="background:' + dayColor(dayNumber(S.mapDay)) + '"></i> This day\u2019s stops (number is visit order)</span>' +
+        '<span class="leg opt">Lighter pin = optional</span>';
+    }
+  }
+
+  const dir = gmapsDirUrl(drive);
+  const routeLabel = allDays ? 'Open overnight-base route in Google Maps' : 'Open this day\u2019s route in Google Maps';
+  $('#gmapActions').innerHTML = dir ? '<a class="btn primary" href="' + esc(dir) + '" target="_blank" rel="noopener">' + routeLabel + '</a>' : '';
+
+  function stopLi(rec, badgeDay) {
+    const n = badgeDay != null ? badgeDay : (allDays ? rec.firstDay : rec.seq);
+    const color = dayColor(badgeDay != null ? badgeDay : rec.firstDay);
+    const daysLbl = rec.dates.map(dt => 'Day ' + dayNumber(dt)).join(', ');
+    const tags = (rec.optional ? '<span class="op">optional</span>' : '') +
+      (isWalkPin(rec.po) ? '<span class="op">walk / bus</span>' : '');
+    return '<li class="' + (rec.optional ? 'opt-stop' : '') + '">' +
+      '<button class="item" data-poi="' + rec.po.id + '"><span class="pin-badge" style="--pin:' + color + '">' + n + '</span>' +
+      '<span class="nm">' + esc(rec.po.name) + '<small>' + esc(rec.po.name_ja || '') + (allDays && badgeDay == null ? ' \u00b7 ' + daysLbl : '') + '</small></span>' + tags + '</button> ' +
+      '<a class="btn" href="' + esc(gmapsPlaceUrl(rec.po)) + '" target="_blank" rel="noopener">Open in Google Maps</a> ' +
+      '<a class="btn" href="' + esc(gmapsDirToUrl(rec.po)) + '" target="_blank" rel="noopener">Directions</a></li>';
+  }
+  if (allDays) {
+    let html = '<h3>Every stop on the itinerary (' + recs.length + ')</h3>';
+    days.forEach((d, i) => {
+      const subset = recs.filter(r => r.dates.includes(d.date));
+      if (!subset.length) return;
+      const label = 'Day ' + (i + 1) + ' \u00b7 ' + fmtD(parseJst(d.date + 'T12:00'));
+      html += '<h3 class="map-day-h"><i style="background:' + dayColor(i + 1) + '"></i> ' + esc(label) + '</h3><ul class="list">' +
+        subset.map(r => stopLi(r, i + 1)).join('') + '</ul>';
+    });
+    $('#gmapStops').innerHTML = html;
+  } else {
+    $('#gmapStops').innerHTML = recs.length
+      ? '<h3>Stops on this day (' + recs.length + ')</h3><ul class="list">' + recs.map(r => stopLi(r)).join('') + '</ul>'
+      : '<p class="muted small">No mapped stops for this day.</p>';
+  }
+  $('#gmapNote').textContent = allDays
+    ? 'Every itinerary stop is pinned and coloured by day, including food, hotels, ports and optional extras (lighter pins). Tap a pin for Google Maps and directions. Tiles need a network connection; the sketch below works offline.'
+    : 'All of this day\u2019s stops are pinned, including optional (lighter) and walk-only places \u2014 those are not in the driving route. Use the button above for turn-by-turn directions in Google Maps, or your car nav.';
 }
 function renderMap() {
-  renderGoogleMap();
+  renderTripMap();
   $('#mapAreas').innerHTML = Object.keys(AREAS).map(a => '<button class="' + (a === S.mapArea ? 'on' : '') + '" data-area="' + a + '">' + a + '</button>').join('');
   const sel = AREAS[S.mapArea];
   const pts = S.pois.filter(p => !sel || sel.includes(p.area));

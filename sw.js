@@ -1,8 +1,8 @@
 /* Offline-first service worker: precaches every app file and all content. Bump CACHE_VERSION after editing data. */
-const CACHE_VERSION = 'alps-v21-final';
+const CACHE_VERSION = 'alps-v22-map';
 const PRECACHE = [
   './', 'index.html', 'manifest.json', 'css/app.css', 'js/lock.js', 'js/app.js', 'js/chat.js',
-  'js/vendor/qrcode.min.js', 'js/vendor/jsQR.min.js',
+  'js/vendor/qrcode.min.js', 'js/vendor/jsQR.min.js', 'js/vendor/leaflet.js', 'js/vendor/leaflet.css',
   'data/pois.json', 'data/itinerary.json', 'data/lock.json',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png', 'icons/icon.svg'
 ];

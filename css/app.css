@@ -114,8 +114,29 @@ body.locked > header, body.locked > main, body.locked > nav, body.locked #nextBa
 .lock-card input { width: 100%; box-sizing: border-box; }
 
 #gmapWrap{position:relative;width:100%;aspect-ratio:4/3;min-height:240px;max-height:70vh;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:#e8eef4;margin-top:8px}
-#gmapWrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.gmap-offline{position:absolute;left:8px;right:8px;bottom:8px;z-index:1;background:#fff9db;border-radius:8px;padding:6px 8px;font-size:.82rem}
+#tripMap{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+.trip-pin-wrap{background:none!important;border:0}
+.trip-pin-dot{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--pin,#0b4f6c);color:#fff;font:800 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.trip-pin-wrap.opt .trip-pin-dot{background:#fff;color:var(--pin,#0b4f6c);border:2px dashed var(--pin,#0b4f6c);box-shadow:0 1px 3px rgba(0,0,0,.2);opacity:.95}
+.map-legend{display:flex;flex-wrap:wrap;gap:8px 10px;margin:8px 0 4px;font-size:.78rem;font-weight:700;color:#333}
+.map-legend .leg{display:inline-flex;align-items:center;gap:5px}
+.map-legend i{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none}
+.map-legend .leg.opt{font-weight:600;color:#555}
+.seg button.day-chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--pin,var(--pri));display:inline-block;margin-right:6px;flex:none}
+#gmapStops .pin-badge{flex:none;width:28px;height:28px;border-radius:50%;background:var(--pin,#0b4f6c);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+#gmapStops .opt-stop .pin-badge{background:#fff;color:var(--pin,#0b4f6c);border:2px dashed var(--pin,#0b4f6c)}
+#gmapStops .map-day-h{display:flex;align-items:center;gap:8px;margin:14px 0 4px;font-size:.95rem}
+#gmapStops .map-day-h i{width:12px;height:12px;border-radius:50%;display:inline-block;flex:none}
+#gmapStops .list li{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#gmapStops .list .item{flex:1 1 180px;margin:0}
+#gmapStops .list .btn{flex:0 0 auto;min-height:40px;padding:6px 10px;font-size:.8rem}
+.mpop b{font-size:1rem}
+.mpop-day{margin:4px 0 2px;font-weight:700}
+.mpop .links{margin-top:8px}
+.mpop .links .btn{min-height:40px;font-size:.8rem}
+.leaflet-popup-content-wrapper{border-radius:12px;font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.leaflet-container a{color:var(--pri)}
+.gmap-offline{position:absolute;left:8px;right:8px;bottom:8px;z-index:1000;background:#fff9db;border-radius:8px;padding:6px 8px;font-size:.82rem;pointer-events:none}
 #gmapActions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
 #gmapActions .btn{flex:1 1 160px;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center}
 #gmapStops{margin:0 0 8px}
