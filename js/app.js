@@ -4,7 +4,7 @@
 const TZ = 'Asia/Tokyo';
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const CAT_ICON = {transport:'🚌',lodging:'🛏️',parking:'🅿️',nature:'🌲',viewpoint:'🏔️',history:'🏯',shrine:'⛩️',temple:'🛕',museum:'🏛️',food:'🍱',shopping:'🛍️',GEO:'🎮',town:'🏘️',onsen:'♨️',info:'ℹ️',garden:'🌸'};
+const CAT_ICON = {transport:'🚌',lodging:'🛏️',parking:'🅿️',nature:'🌲',viewpoint:'🏔️',history:'🏯',shrine:'⛩️',temple:'🛕',museum:'🏛️',food:'🍱',shopping:'🛍️',GEO:'🎮',town:'🏘️',onsen:'♨️',info:'ℹ️',garden:'🌸',activity:'🎣'};
 
 const S = {
   pois: [], byId: {}, itin: null, items: [],
