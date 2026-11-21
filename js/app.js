@@ -188,7 +188,7 @@ function dayDriveStops(date) {
   return stops;
 }
 function allTripStops() {
-  return ['haneda', 'karuizawa-psp', 'suwako-park', 'unazuki-stn', 'kittokito', 'akandana', 'takayama-green', 'konansou', 'ito-kowakien', 'hotel-clad', 'narita']
+  return ['haneda', 'karuizawa-psp', 'suwako-park', 'unazuki-stn', 'new-otani-takaoka', 'akandana', 'takayama-green', 'ito-kowakien', 'shichirigahama-parking', 'narita']
     .map(id => S.byId[id]).filter(Boolean);
 }
 function gmapsDirUrl(stops) {
@@ -359,7 +359,7 @@ function renderStays() {
 }
 
 // ---------- map (offline SVG sketch) ----------
-const AREAS = {All: null, Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], Unazuki: ['Unazuki', 'Imizu (Toyama)', 'Uozu'], Kawaguchiko: ['Kawaguchiko', 'Fujiyoshida'], 'Ito/Izu': ['Ito', 'Izu', 'Izunokuni', 'Nishiizu'], Gotemba: ['Gotemba'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo', 'Machida (Tokyo)'], Narita: ['Narita', 'Tomisato (Chiba)'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa', 'Chino']};
+const AREAS = {All: null, Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], Unazuki: ['Unazuki', 'Uozu'], 'Takaoka/Toyama': ['Takaoka', 'Toyama', 'Namerikawa', 'Imizu (Toyama)'], 'Ito/Izu': ['Ito', 'Izu', 'Izunokuni', 'Nishiizu'], Kamakura: ['Kamakura'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo', 'Machida (Tokyo)'], Narita: ['Narita', 'Tomisato (Chiba)'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa', 'Chino']};
 function setGmapOffline(off) {
   const n = $('#gmapOffline');
   if (n) n.classList.toggle('hidden', !off);
@@ -453,7 +453,7 @@ function renderMap() {
   let svg = '<rect x="0" y="0" width="1000" height="1000" fill="#eef3ee"/>';
   svg += '<polyline points="' + seq.map(p => X(p.lon).toFixed(1) + ',' + Y(p.lat).toFixed(1)).join(' ') + '" fill="none" stroke="#d9480f" stroke-width="5" stroke-dasharray="14 10" stroke-linejoin="round" opacity=".7"/>';
   const fs = sel ? 30 : 24, boxes = [];
-  const key = ['haneda', 'karuizawa-psp', 'shiraito-falls', 'happo-bt', 'unazuki-stn', 'kittokito', 'sanmachi', 'kappa-bashi', 'akandana', 'ito-kowakien', 'usami-port', 'joren-falls', 'ito-stn', 'jogasaki', 'omuro', 'hotel-clad', 'gotemba-outlets', 'grandberry', 'narita', 'suwako-park', 'happo-ike'];
+  const key = ['haneda', 'karuizawa-psp', 'shiraito-falls', 'happo-bt', 'unazuki-stn', 'kittokito', 'sanmachi', 'kappa-bashi', 'akandana', 'ito-kowakien', 'usami-port', 'joren-falls', 'ito-stn', 'jogasaki', 'omuro', 'mega-donki-ito', 'doraemon-trail', 'hotaruika-museum', 'kamakura-koko-crossing', 'narita', 'suwako-park', 'happo-ike'];
   const ki = p => { const i = key.indexOf(p.id); return i < 0 ? 99 : i; };
   const main = p => p.category === 'lodging' && !p.tbd;
   const order = pts.slice().sort((a, b) => ki(a) - ki(b) || main(b) - main(a));
