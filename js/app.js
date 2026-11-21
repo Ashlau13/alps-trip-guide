@@ -359,7 +359,7 @@ function renderStays() {
 }
 
 // ---------- map (offline SVG sketch) ----------
-const AREAS = {All: null, Hakuba: ['Hakuba', 'Hakuba route', 'Omachi'], Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], Unazuki: ['Unazuki', 'Imizu (Toyama)'], 'Ito/Izu': ['Ito', 'Izu', 'Izunokuni', 'Nishiizu'], Gotemba: ['Gotemba'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo', 'Machida (Tokyo)'], Narita: ['Narita', 'Tomisato (Chiba)'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa', 'Chino']};
+const AREAS = {All: null, Hakuba: ['Hakuba', 'Hakuba route', 'Omachi'], Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], Unazuki: ['Unazuki', 'Imizu (Toyama)', 'Uozu'], 'Ito/Izu': ['Ito', 'Izu', 'Izunokuni', 'Nishiizu'], Gotemba: ['Gotemba'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo', 'Machida (Tokyo)'], Narita: ['Narita', 'Tomisato (Chiba)'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa', 'Chino']};
 function setGmapOffline(off) {
   const n = $('#gmapOffline');
   if (n) n.classList.toggle('hidden', !off);

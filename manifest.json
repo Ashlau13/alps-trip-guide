@@ -1,7 +1,7 @@
 {
   "name": "Alps Trip Guide",
   "short_name": "Alps Trip",
-  "description": "Offline guide + group chat for a Japan Alps & Izu road trip (Hakuba, Kamikochi, Takayama, Ito, Karuizawa).",
+  "description": "Offline guide + group chat for a Japan Alps & Izu road trip (Karuizawa, Lake Suwa, Kurobe, Kamikochi, Takayama, Ito).",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
