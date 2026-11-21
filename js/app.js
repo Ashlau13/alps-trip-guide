@@ -161,7 +161,7 @@ function renderBanner() {
 
 
 // ---------- maps (Leaflet pins + official Google open links) ----------
-const NO_DRIVE = { 'myojin-ike': 1, 'kappa-bashi': 1, 'kamikochi-bt': 1, 'kamikochi-vc': 1, 'happo-ike': 1 };
+const NO_DRIVE = { 'myojin-ike': 1, 'kappa-bashi': 1, 'kamikochi-bt': 1, 'kamikochi-vc': 1, 'happo-ike': 1, 'doraemon-trail': 1, 'kamakura-koko-crossing': 1, 'bills-shichirigahama': 1 };
 const DAY_COLORS = ['#0b4f6c', '#2b8a3e', '#d9480f', '#7048e8', '#c92a2a', '#1864ab', '#e67700', '#0c8599', '#5c9400', '#495057'];
 function dayNumber(date) {
   const days = (S.itin && S.itin.days) || [];

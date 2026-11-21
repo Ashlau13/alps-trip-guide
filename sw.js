@@ -1,5 +1,5 @@
 /* Offline-first service worker: precaches every app file and all content. Bump CACHE_VERSION after editing data. */
-const CACHE_VERSION = 'alps-v26-toyama-ito';
+const CACHE_VERSION = 'alps-v26b-toyama-ito';
 const PRECACHE = [
   './', 'index.html', 'manifest.json', 'css/app.css', 'js/lock.js', 'js/app.js', 'js/chat.js',
   'js/vendor/qrcode.min.js', 'js/vendor/jsQR.min.js', 'js/vendor/leaflet.js', 'js/vendor/leaflet.css',
