@@ -309,6 +309,42 @@ function bookingsHtml() {
     '<ul>' + items + '</ul></details>';
 }
 
+
+// ---------- stop info, meals, fees (v27) ----------
+const STOP_TYPES = { activity: 1, shopping: 1, museum: 1, food: 1, parking: 1 };
+const LEG_ICON = { drive: '🚗', walk: '🚶', bus: '🚌', same: '📍' };
+function legLine(dir, l) {
+  if (!l) return '';
+  return '<div class="lg">' + (dir === 'from' ? '⬅️ From ' : '➡️ To ') + '<b>' + esc(l.place || '') + '</b>: ' + (LEG_ICON[l.mode] || '') + ' ' + esc(l.text || '—') + '</div>';
+}
+function contactHtml(p) {
+  const c = p && p.contact; if (!c) return '';
+  const tel = c.tel && c.tel !== '—' ? (c.tel.match(/^[0-9-]+/) ? '<a href="tel:' + esc(c.tel.match(/^[0-9-]+/)[0].replace(/-/g, '')) + '">' + esc(c.tel) + '</a>' : esc(c.tel)) : '—';
+  return '<div class="ci">🏠 ' + esc(c.addr || '—') + (c.addr_ja && c.addr_ja !== '—' ? '<br><small class="muted">' + esc(c.addr_ja) + '</small>' : '') + '</div>' +
+    '<div class="ci">🕘 ' + esc(c.hours || '—') + ' · <b>Closed:</b> ' + esc(c.closed || '—') + '</div>' +
+    '<div class="ci">📞 ' + tel + '</div>';
+}
+function stopInfoHtml(it, p) {
+  if (!it.legs && !(p && p.contact)) return '';
+  return '<div class="sinfo">' + contactHtml(p) + (it.legs ? legLine('from', it.legs.from) + legLine('to', it.legs.to) : '') + '</div>';
+}
+function mealsHtml(d) {
+  if (!d.meals || !d.meals.length) return '';
+  return '<details class="dsec meals" open><summary>🍽️ Meals</summary>' + d.meals.map(m => {
+    const p = m.poi && S.byId[m.poi];
+    return '<div class="ml"><div><span class="mt">' + esc(m.meal) + '</span> ' + (p ? '<a href="#" data-poi="' + p.id + '"><b>' + esc(p.name) + '</b></a>' + (p.name_ja ? ' <small class="muted">' + esc(p.name_ja) + '</small>' : '') : '') + '</div>' +
+      '<div class="n">' + esc(m.dish) + '</div><div class="n">💴 ' + esc(m.price || '—') + '</div>' +
+      (m.note ? '<div class="n muted">' + esc(m.note) + '</div>' : '') +
+      (p ? '<div class="sinfo">' + contactHtml(p) + (m.legs ? legLine('from', m.legs.from) + legLine('to', m.legs.to) : '') + '</div>' : '') + '</div>';
+  }).join('') + '</details>';
+}
+function feesHtml(d) {
+  if (!d.fees || !d.fees.length) return '';
+  return '<details class="dsec fees" open><summary>🎟️ Entry &amp; fees</summary><table class="ft">' + d.fees.map(f =>
+    '<tr><td>' + esc(f.item) + (f.note ? '<br><small class="muted">' + esc(f.note) + '</small>' : '') + '</td><td class="fv">' + esc(f.fee) + '</td></tr>').join('') + '</table>' +
+    (d.estimate ? '<div class="est">🧮 Per person, this day: ' + esc(d.estimate) + '</div>' : '') + '</details>';
+}
+
 // ---------- itinerary ----------
 function tripHeader() {
   const tr = S.itin.trip || {};
@@ -334,8 +370,8 @@ function renderPlan() {
         (it.notes ? '<div class="n">' + esc(it.notes) + '</div>' : '') +
         (it.details && it.details.length ? '<ul class="det">' + it.details.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') +
         linksHtml(it.links) +
-        (p ? '<div class="n"><a href="#" data-poi="' + p.id + '">📍 ' + esc(p.name) + '</a></div>' : '') + '</div></div>';
-    }).join('') + ((S.itin.stays && S.itin.stays.areas.filter(a => a.nights[0] === d.date).map(a => stayArea(a, false)).join('')) || '') + '</div>';
+        (p ? '<div class="n"><a href="#" data-poi="' + p.id + '">📍 ' + esc(p.name) + '</a></div>' : '') + (STOP_TYPES[it.type] ? stopInfoHtml(it, p) : '') + '</div></div>';
+    }).join('') + mealsHtml(d) + feesHtml(d) + ((S.itin.stays && S.itin.stays.areas.filter(a => a.nights[0] === d.date).map(a => stayArea(a, false)).join('')) || '') + '</div>';
   }).join('') + '<p class="muted small">Lodging: ' + S.itin.lodging.map(l => esc(l.name) + (l.placeholder ? ' (TBD)' : (l.confirm ? ' (confirm)' : ''))).join(' · ') + '</p>';
 }
 
