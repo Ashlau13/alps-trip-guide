@@ -188,7 +188,7 @@ function dayDriveStops(date) {
   return stops;
 }
 function allTripStops() {
-  return ['haneda', 'karuizawa-psp', 'suwako-park', 'happo-bt', 'unazuki-stn', 'kittokito', 'akandana', 'takayama-green', 'ito-kowakien', 'hotel-clad', 'narita']
+  return ['haneda', 'karuizawa-psp', 'suwako-park', 'unazuki-stn', 'kittokito', 'akandana', 'takayama-green', 'konansou', 'ito-kowakien', 'hotel-clad', 'narita']
     .map(id => S.byId[id]).filter(Boolean);
 }
 function gmapsDirUrl(stops) {
