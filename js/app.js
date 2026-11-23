@@ -161,7 +161,7 @@ function renderBanner() {
 
 
 // ---------- maps (Leaflet pins + official Google open links) ----------
-const NO_DRIVE = { 'myojin-ike': 1, 'kappa-bashi': 1, 'kamikochi-bt': 1, 'kamikochi-vc': 1, 'happo-ike': 1, 'doraemon-trail': 1, 'kamakura-koko-crossing': 1, 'bills-shichirigahama': 1 };
+const NO_DRIVE = { 'myojin-bashi': 1, 'kanigoya': 1, 'wada-house': 1, 'ogimachi-deck': 1, 'irori-shirakawa': 1, 'myojin-ike': 1, 'kappa-bashi': 1, 'kamikochi-bt': 1, 'kamikochi-vc': 1, 'happo-ike': 1, 'doraemon-trail': 1, 'kamakura-koko-crossing': 1, 'bills-shichirigahama': 1 };
 const DAY_COLORS = ['#0b4f6c', '#2b8a3e', '#d9480f', '#7048e8', '#c92a2a', '#1864ab', '#e67700', '#0c8599', '#5c9400', '#495057'];
 function dayNumber(date) {
   const days = (S.itin && S.itin.days) || [];
@@ -188,7 +188,7 @@ function dayDriveStops(date) {
   return stops;
 }
 function allTripStops() {
-  return ['haneda', 'karuizawa-psp', 'suwako-park', 'unazuki-stn', 'new-otani-takaoka', 'akandana', 'takayama-green', 'ito-kowakien', 'shichirigahama-parking', 'narita']
+  return ['haneda', 'karuizawa-psp', 'beniya-suwa', 'hardoff-hirata', 'akandana', 'kittokito', 'takayama-green', 'seseragi-parking', 'kamo-unagi', 'wellseason-hamanako', 'tsubasa-sushi', 'ito-kowakien', 'shichirigahama-parking', 'narita']
     .map(id => S.byId[id]).filter(Boolean);
 }
 function gmapsDirUrl(stops) {
@@ -328,12 +328,22 @@ function stopInfoHtml(it, p) {
   if (!it.legs && !(p && p.contact)) return '';
   return '<div class="sinfo">' + contactHtml(p) + (it.legs ? legLine('from', it.legs.from) + legLine('to', it.legs.to) : '') + '</div>';
 }
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function dayWd(d) { return WD[new Date(d.date + 'T12:00:00+09:00').getUTCDay()]; }
+function closedFlag(p, d) {
+  const c = p && p.contact && p.contact.closed; if (!c) return '';
+  return new RegExp('\\b' + dayWd(d) + '\\b').test(c) ? '<div class="warnnote">⚠️ Closed on ' + dayWd(d) + 's — pick the backup</div>' : '<div class="okflag">✅ Open on ' + dayWd(d) + ' (closed: ' + esc(c) + ')</div>';
+}
+function tabelogHtml(p) {
+  const t = p && p.tabelog; if (!t) return '';
+  return '<div class="tbl">⭐ Tabelog <b>' + esc(t.score) + '</b> (' + Number(t.reviews).toLocaleString('en') + ' reviews) · <a href="' + esc(safeUrl(t.url)) + '" target="_blank" rel="noopener">tabelog.com ↗</a>' + (parseFloat(t.score) < 3.5 ? ' <small class="muted">(below 3.5)</small>' : '') + '</div>';
+}
 function mealsHtml(d) {
   if (!d.meals || !d.meals.length) return '';
   return '<details class="dsec meals" open><summary>🍽️ Meals</summary>' + d.meals.map(m => {
     const p = m.poi && S.byId[m.poi];
-    return '<div class="ml"><div><span class="mt">' + esc(m.meal) + '</span> ' + (p ? '<a href="#" data-poi="' + p.id + '"><b>' + esc(p.name) + '</b></a>' + (p.name_ja ? ' <small class="muted">' + esc(p.name_ja) + '</small>' : '') : '') + '</div>' +
-      '<div class="n">' + esc(m.dish) + '</div><div class="n">💴 ' + esc(m.price || '—') + '</div>' +
+    return '<div class="ml"><div>' + (m.time ? '<small class="muted">' + esc(m.time) + '</small> ' : '') + '<span class="mt">' + esc(m.meal) + '</span> ' + (p ? '<a href="#" data-poi="' + p.id + '"><b>' + esc(p.name) + '</b></a>' + (p.name_ja ? ' <small class="muted">' + esc(p.name_ja) + '</small>' : '') : '') + '</div>' +
+      tabelogHtml(p) + '<div class="n">' + esc(m.dish) + '</div><div class="n">💴 ' + esc(m.price || '—') + '</div>' + (p ? closedFlag(p, d) : '') +
       (m.note ? '<div class="n muted">' + esc(m.note) + '</div>' : '') +
       (p ? '<div class="sinfo">' + contactHtml(p) + (m.legs ? legLine('from', m.legs.from) + legLine('to', m.legs.to) : '') + '</div>' : '') + '</div>';
   }).join('') + '</details>';
@@ -358,11 +368,62 @@ function tripHeader() {
     bookingsHtml() +
     (all.length ? '<details class="todo"><summary>Flags in the day plan (' + all.length + ' placeholders / confirm)</summary><ul>' + all.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul></details>' : '') + '</div>';
 }
+function tollsHtml(d) {
+  const t = d.tolls; if (!t) return '';
+  return '<details class="dsec tolls" open><summary>🛣️ Tolls (ETC, standard car)</summary><table class="ft">' + t.rows.map(r =>
+    '<tr><td>' + esc(r.seg) + '<br><small class="muted">' + esc(r.road) + (r.note ? ' · ' + esc(r.note) : '') + '</small></td><td class="fv">' + esc(r.fee) + '</td></tr>').join('') +
+    '<tr class="tt"><td><b>Day total (per car)</b></td><td class="fv"><b>' + esc(t.total) + '</b></td></tr></table>' + (t.note ? '<div class="n muted">' + esc(t.note) + '</div>' : '') + '</details>';
+}
+function telLink(t) { return t && t !== '—' && /^[0-9-]+/.test(t) ? '<a href="tel:' + esc(t.match(/^[0-9-]+/)[0].replace(/-/g, '')) + '">' + esc(t) + '</a>' : esc(t || '—'); }
+function hotelHtml(d) {
+  const h = d.hotel;
+  if (!h) return '<details class="dsec hotelblk" open><summary>🛏️ Tonight</summary><div class="n">No hotel tonight — ANA NH801 Narita 18:25 → Singapore 00:45.</div></details>';
+  const nm = h.url ? '<a href="' + esc(safeUrl(h.url)) + '" target="_blank" rel="noopener">' + esc(h.name) + ' ↗</a>' : esc(h.name);
+  return '<details class="dsec hotelblk" open><summary>🛏️ Tonight: ' + esc(h.area) + ' <small class="muted">(' + esc(h.nights) + ')</small></summary>' +
+    '<div class="n"><b>' + nm + '</b> <span class="nb">NOT BOOKED</span></div>' +
+    '<table class="ft hk"><tr><td>Check-in</td><td class="fv">' + esc(h.checkin) + '</td></tr><tr><td>Check-out</td><td class="fv">' + esc(h.checkout) + '</td></tr><tr><td>Latest check-in</td><td class="fv">' + esc(h.latest) + '</td></tr></table>' +
+    (h.dinner && h.dinner !== '—' ? '<div class="n">🍽️ ' + esc(h.dinner) + '</div>' : '') +
+    '<div class="n">🅿️ ' + esc(h.parking || '—') + '</div><div class="n">📞 ' + telLink(h.tel) + '</div>' +
+    (h.alts && h.alts.length ? '<div class="n muted small">Alternatives: ' + h.alts.map(a => esc(a.name) + ' (in ' + esc(a.checkin) + ' · out ' + esc(a.checkout) + ' · latest ' + esc(a.latest) + ')').join('; ') + ' — full list in the Stays tab.</div>' : '') + '</details>';
+}
+function totalHtml(d) { return d.total ? '<div class="est daytotal">🧮 Day total: ' + esc(d.total) + '</div>' : ''; }
+function planNav(cur) {
+  const days = S.itin.days, n = days.length;
+  const chips = '<button type="button" class="' + (cur === 0 ? 'on' : '') + '" data-plan-day="0">Overview</button>' + days.map((d, i) =>
+    '<button type="button" class="day-chip' + (cur === i + 1 ? ' on' : '') + '" style="--dc:' + dayColor(i + 1) + '" data-plan-day="' + (i + 1) + '">' + (i + 1) + '</button>').join('');
+  return '<div class="seg plannav" role="tablist" aria-label="Choose a day">' + chips + '</div>';
+}
+function prevNext(cur) {
+  const n = S.itin.days.length;
+  return '<div class="pn">' + (cur > 1 ? '<button type="button" class="btn" data-plan-day="' + (cur - 1) + '">‹ Day ' + (cur - 1) + '</button>' : '<button type="button" class="btn" data-plan-day="0">‹ Overview</button>') +
+    '<button type="button" class="btn" data-plan-day="0">All days</button>' +
+    (cur < n ? '<button type="button" class="btn" data-plan-day="' + (cur + 1) + '">Day ' + (cur + 1) + ' ›</button>' : '<span></span>') + '</div>';
+}
+function overviewHtml() {
+  const tr = S.itin.trip || {};
+  return tripHeader() + (tr.tolls ? '<div class="card"><b>🛣️ Tolls</b><div class="n">' + esc(tr.tolls) + '</div></div>' : '') +
+    '<div class="ovw">' + S.itin.days.map((d, i) =>
+      '<button type="button" class="ovd" style="--dc:' + dayColor(i + 1) + '" data-plan-day="' + (i + 1) + '"><span class="ovn">Day ' + (i + 1) + '</span> <b>' + esc(fmtD(parseJst(d.date + 'T12:00'))) + '</b> · ' + esc(d.title) +
+      '<small>🚩 ' + esc(d.start || '') + ' → 🛏️ ' + esc(d.overnight || '') + (d.tolls ? ' · 🛣️ ' + esc(d.tolls.total) : '') + (d.hotel ? ' · in ' + esc(d.hotel.checkin) + ' / latest ' + esc(d.hotel.latest) : '') + '</small></button>').join('') + '</div>' +
+    '<p class="muted small">Lodging: ' + S.itin.lodging.map(l => esc(l.name)).join(' · ') + '</p>';
+}
+function defaultPlanDay() {
+  const t = now(), days = S.itin.days;
+  const i = days.findIndex(d => { const s = parseJst(d.date + 'T00:00').getTime(); return t >= s && t < s + 864e5; });
+  return i >= 0 ? i + 1 : 0;
+}
 function renderPlan() {
+  if (S.planDay == null) S.planDay = defaultPlanDay();
+  const cur = S.planDay, days = S.itin.days;
+  if (!cur || !days[cur - 1]) { $('#planList').innerHTML = planNav(0) + overviewHtml(); return; }
+  const d = days[cur - 1], di = cur - 1;
   const n = computeNext(), t = now();
-  $('#planList').innerHTML = tripHeader() + S.itin.days.map((d, di) => {
-    const items = S.items.filter(i => i.date === d.date);
-    return '<div class="day" id="day-' + (di + 1) + '"><h3>Day ' + (di + 1) + ' · ' + esc(fmtD(parseJst(d.date + 'T12:00'))) + ' - ' + esc(d.title) + '</h3>' + (d.note ? '<div class="warnnote daynote">⚠️ ' + esc(d.note) + '</div>' : '') + items.map(it => {
+  const items = S.items.filter(i => i.date === d.date);
+  $('#planList').innerHTML = planNav(cur) + '<div class="day daypage" id="day-' + cur + '" style="--dc:' + dayColor(cur) + '">' +
+    '<div class="dayhdr"><h3>Day ' + cur + ' · ' + esc(fmtD(parseJst(d.date + 'T12:00'))) + '</h3><div class="dtitle">' + esc(d.title) + '</div>' +
+    '<div class="droute">🚩 ' + esc(d.start || '') + ' → 🛏️ ' + esc(d.overnight || '') + '</div></div>' +
+    (d.note ? '<div class="warnnote daynote">⚠️ ' + esc(d.note) + '</div>' : '') +
+    '<details class="dsec tl" open><summary>🕘 Timeline</summary>' + items.map(it => {
       const cls = (n && n.next && n.next.id === it.id) ? 'next' : ((it._e || it._s) < t ? 'past' : '');
       const p = it.poi && S.byId[it.poi];
       return '<div class="it ' + cls + (it.optional ? ' opt' : '') + '" data-it="' + it.id + '"><div class="t">' + fmtT(it._s) + (it._e ? '<br><small class="muted">-' + fmtT(it._e) + '</small>' : '') + (it.approx ? '<br><small class="muted">approx</small>' : '') + '</div><div><b>' + esc(it.title) + '</b>' +
@@ -371,9 +432,10 @@ function renderPlan() {
         (it.details && it.details.length ? '<ul class="det">' + it.details.map(x => '<li>' + esc(x) + '</li>').join('') + '</ul>' : '') +
         linksHtml(it.links) +
         (p ? '<div class="n"><a href="#" data-poi="' + p.id + '">📍 ' + esc(p.name) + '</a></div>' : '') + (STOP_TYPES[it.type] ? stopInfoHtml(it, p) : '') + '</div></div>';
-    }).join('') + mealsHtml(d) + feesHtml(d) + ((S.itin.stays && S.itin.stays.areas.filter(a => a.nights[0] === d.date).map(a => stayArea(a, false)).join('')) || '') + '</div>';
-  }).join('') + '<p class="muted small">Lodging: ' + S.itin.lodging.map(l => esc(l.name) + (l.placeholder ? ' (TBD)' : (l.confirm ? ' (confirm)' : ''))).join(' · ') + '</p>';
+    }).join('') + '</details>' +
+    mealsHtml(d) + feesHtml(d) + tollsHtml(d) + hotelHtml(d) + totalHtml(d) + '</div>' + prevNext(cur);
 }
+S.setPlanDay = function (n) { S.planDay = n; renderPlan(); window.scrollTo(0, 0); };
 
 
 // ---------- stays (lodging shortlist) ----------
@@ -383,6 +445,8 @@ function stayCard(o) {
   return '<div class="stay"><div class="stay-h"><b>' + name + '</b>' + tag + '<span class="nb">NOT BOOKED</span></div>' +
     (o.jp ? '<div class="muted small">' + esc(o.jp) + '</div>' : '') + '<ul class="det">' +
     (o.parking ? '<li>🅿️ ' + esc(o.parking) + '</li>' : '') + (o.features ? '<li>✨ ' + esc(o.features) + '</li>' : '') +
+    '<li>⏰ Check-in <b>' + esc(o.checkin || '—') + '</b> · Check-out <b>' + esc(o.checkout || '—') + '</b> · Latest check-in <b>' + esc(o.latest || '—') + '</b></li>' +
+    (o.dinner && o.dinner !== '—' ? '<li>🍽️ ' + esc(o.dinner) + '</li>' : '') + (o.tel && o.tel !== '—' ? '<li>📞 ' + telLink(o.tel) + '</li>' : '') +
     (o.price ? '<li>💴 ' + esc(o.price) + '</li>' : '') + (o.opens ? '<li>📅 ' + esc(o.opens) + '</li>' : '') + '</ul></div>';
 }
 function stayArea(a, open) {
@@ -395,7 +459,7 @@ function renderStays() {
 }
 
 // ---------- map (offline SVG sketch) ----------
-const AREAS = {All: null, Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Takayama: ['Takayama'], Unazuki: ['Unazuki', 'Uozu'], 'Takaoka/Toyama': ['Takaoka', 'Toyama', 'Namerikawa', 'Imizu (Toyama)'], 'Ito/Izu': ['Ito', 'Izu', 'Izunokuni', 'Nishiizu'], Kamakura: ['Kamakura'], Karuizawa: ['Karuizawa'], Tokyo: ['Tokyo', 'Machida (Tokyo)'], Narita: ['Narita', 'Tomisato (Chiba)'], 'Matsumoto/Azumino': ['Matsumoto', 'Azumino'], Suwa: ['Lake Suwa', 'Chino']};
+const AREAS = {All: null, Karuizawa: ['Karuizawa'], Suwa: ['Lake Suwa', 'Chino'], 'Matsumoto': ['Matsumoto', 'Azumino'], Kamikochi: ['Kamikochi', 'Hirayu', 'Okuhida'], Shinminato: ['Imizu (Toyama)', 'Toyama'], Takayama: ['Takayama'], 'Shirakawa-go': ['Shirakawa-go'], 'Lake Hamana': ['Lake Hamana', 'Hamamatsu'], 'Ito/Izu': ['Ito', 'Izu', 'Izunokuni', 'Nishiizu', 'Numazu/Mishima'], Kamakura: ['Kamakura'], Tokyo: ['Tokyo', 'Machida (Tokyo)'], Narita: ['Narita', 'Tomisato (Chiba)']};
 function setGmapOffline(off) {
   const n = $('#gmapOffline');
   if (n) n.classList.toggle('hidden', !off);
@@ -586,6 +650,7 @@ function wire() {
   document.body.addEventListener('click', e => {
     const ext = e.target.closest('a[target="_blank"]'); if (ext) return;
     const b = e.target.closest('[data-poi]'); if (b) { e.preventDefault(); renderPlace(b.dataset.poi); return; }
+    const pd = e.target.closest('[data-plan-day]'); if (pd) { e.preventDefault(); S.setPlanDay(parseInt(pd.dataset.planDay, 10) || 0); return; }
     const day = e.target.closest('[data-map-day]'); if (day) { S.mapDay = day.dataset.mapDay; renderMap(); return; }
     const a = e.target.closest('[data-area]'); if (a) { S.mapArea = a.dataset.area; renderMap(); }
   });
@@ -626,6 +691,7 @@ async function boot() {
   wire();
   registerSW();
   if (sim && S.byId[sim]) { $('#simPlace').value = sim; setSimPlace(sim); } else { startGps(); refresh(); }
+  if (q.get('day') != null) S.planDay = parseInt(q.get('day'), 10) || 0;
   if (q.get('tab')) showTab(q.get('tab'));
   S.ready = true;
   document.dispatchEvent(new CustomEvent('appready'));

@@ -164,3 +164,24 @@ body.locked > header, body.locked > main, body.locked > nav, body.locked #nextBa
 .ft{width:100%;border-collapse:collapse;font-size:.85rem}.ft td{border-top:1px solid #f1f3f5;padding:4px 2px;vertical-align:top}
 .ft .fv{text-align:right;font-weight:800;white-space:nowrap;padding-left:8px}
 .est{margin-top:6px;font-size:.85rem;background:#e6fcf5;border-radius:8px;padding:6px 8px}
+
+/* v28: day pages */
+.plannav { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; position: sticky; top: 0; z-index: 5; background: var(--bg, #fff); padding: 6px 0; }
+.plannav button { min-width: 38px; padding: 6px 10px; border-radius: 16px; border: 1px solid #ccd; background: #fff; font-weight: 600; }
+.plannav button.day-chip { border-color: var(--dc, #0b4f6c); color: var(--dc, #0b4f6c); }
+.plannav button.on { background: var(--dc, #0b4f6c); color: #fff; border-color: var(--dc, #0b4f6c); }
+.daypage { border-top: 4px solid var(--dc, #0b4f6c); }
+.dayhdr h3 { margin: 6px 0 2px; }
+.dayhdr .dtitle { font-weight: 600; }
+.dayhdr .droute { margin: 4px 0 8px; color: #445; }
+.dsec.tl > .it { margin-left: 0; }
+.tbl { margin: 2px 0; font-size: .92em; }
+.okflag { font-size: .85em; color: #2b8a3e; margin: 2px 0; }
+.ft tr.tt td { border-top: 2px solid #ccd; }
+.hk td:first-child { width: 45%; }
+.daytotal { margin: 10px 0; font-weight: 600; }
+.pn { display: flex; justify-content: space-between; gap: 8px; margin: 14px 0 24px; }
+.ovw { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.ovd { text-align: left; border: 1px solid #dde; border-left: 6px solid var(--dc, #0b4f6c); border-radius: 10px; padding: 10px 12px; background: #fff; font: inherit; cursor: pointer; }
+.ovd small { display: block; color: #556; margin-top: 4px; }
+.ovd .ovn { display: inline-block; background: var(--dc, #0b4f6c); color: #fff; border-radius: 10px; padding: 1px 8px; font-size: .85em; margin-right: 4px; }
